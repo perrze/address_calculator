@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" href="img/javascript.ico">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> 
+    <title>Calculateur d'adresse et de masques</title>
+</head>
+<body>
+    <h1>Calculateur d'adresses IP et de masque</h1>
+    <textarea id="adresseV4" placeholder="Adresse IPv4"></textarea>
+    <textarea id="masque" placeholder="Masque en Décimal"></textarea>
+    <textarea id="prefixe" placeholder="Préfixe avec /"></textarea>
+    <textarea id="nReseauV4" placeholder="Numéro de réseau"></textarea>
+    <button class="btn btn-danger" onclick="calcul()">ACTION !</button>
+    <button class="btn btn-danger" onclick="clear()">POUET</button>
+    <p id="error"></p>
+    
+    <script type="text/javascript">
+        function print(string){
+            console.log(string);
+        }
+
+        function decimalToBinary(decimal){
+            let binary= Array(8).fill(0,0);
+            let i=0;
+            while (decimal>0){
+                binary[i]=(decimal%2);  // Add at the end of binary, 1 or 0 depend
+                decimal=~~(decimal/2); // Remove what we have considered on up
+                i++;
+                //console.log("decimal"+decimal);
+                //console.log("binary"+binary);
+            }
+            binary.reverse(); // Reverse bc operation give it reverse to natural
+            //console.log(binary.length);
+            return binary;
+        }
+
+        function binaryToDecimal(binary){
+            binary.reverse();
+            let decimal=0;
+            //console.log(binary)
+            for(i=0;i<binary.length;i++){
+                //console.log("Décimal "+binary[i]*(2**i));
+                decimal+=binary[i]*(2**i);
+            }
+            return(decimal);
+        }
+        
+        function adresseToBin(adresseString){
+            let adresseTab=adresseString.split(".");
+            let adresseBin=[];
+            for(i=0;i<4;i++){
+                //console.log(i);
+                adresseBin=adresseBin.concat(decimalToBinary(adresseTab[i]));
+                //console.log(adresseBin)
+            }
+            //console.log("Adresse binaire " + adresseBin)
+            return adresseBin;
+        }
+
+        function binToAdresse(binArray){
+            let adresseString="";
+            var pointeur=0;
+            for(tab=0;tab<4;tab++){
+                let temp=Array(8).fill(0,0);
+                for(i=0;i<8;i++){
+                    temp[i]=binArray[pointeur];
+                    //console.log(temp)
+                    pointeur++;
+                    //print(pointeur);
+                }
+                adresseString+=binaryToDecimal(temp)+".";
+            }
+            adresseString=adresseString.slice(0,-1);
+            return adresseString;
+        }
+
+        function calculNumReseau(adresseBin,masqueBin){
+            let numReseau=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+            let i=0;
+            while(masqueBin[i]==1){
+                if (adresseBin[i]+masqueBin[i]==2){ // and logic
+                    numReseau[i]=1;
+                }
+                i++;
+            }
+            return numReseau;
+        }
+
+        
+        function masqueToPref(masque){
+            let masqueBin=adresseToBin(masque);
+            let  prefixe=0;
+            let i=0;
+            while(masqueBin[i]==1){
+                prefixe+=1;
+                i++;
+            }
+            let prefString="/"+prefixe.toString();
+            return prefString;
+        }
+
+        function prefToBin(prefString){
+            let prefTab=prefString.split("/").splice(1);
+            let prefBin=Array(32).fill(0,0);
+            //print(prefInt);
+            let i=0;
+            while(i<prefTab[0]){
+                prefBin[i]=1;
+                i++;
+            }
+            return prefBin;
+        }
+        
+        function calcul(){
+
+            var adresseV4=document.getElementById("adresseV4");
+            var masque=document.getElementById("masque");
+            var prefixe=document.getElementById("prefixe");
+            var nReseauV4=document.getElementById("nReseauV4"); 
+            if (nReseauV4.value==""){
+                if (masque.value!=""){
+                    if (prefixe.value==""){
+                        prefixe.innerHTML=masqueToPref(masque.value);
+                    }
+                    //print(masque.value);
+                    //print("adresse "+adresseToBin(adresseV4.value));
+                    //print("masque "+(adresseToBin(masque.value)));
+                    nReseauV4.innerHTML=binToAdresse(calculNumReseau(adresseToBin(adresseV4.value),adresseToBin(masque.value)));
+                } else if (prefixe.value!=""){
+                    print(masque.value);
+                    if (masque.value===""){
+                        print(binToAdresse(prefToBin(prefixe.value)));
+                        masque.innerHTML=binToAdresse(prefToBin(prefixe.value));
+                        nReseauV4.innerHTML=binToAdresse(calculNumReseau(adresseToBin(adresseV4.value),prefToBin(prefixe.value)));
+                    }
+                }
+            }
+            
+
+        }
+
+        function clear(){
+            document.getElementById("adresseV4").innerHTML="";
+            document.getElementById("masque").value="";
+            document.getElementById("prefixe").innerHTML="";
+            document.getElementById("nReseauV4").value="";
+        }
+    </script>
+</body>
+</html>
